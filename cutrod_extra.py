@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 import sys
 import unittest
-import graphviz as gv
 
 graph_node=0
 cluster=0
