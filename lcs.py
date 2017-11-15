@@ -183,10 +183,11 @@ def print_lcs_alt(c, X, Y):
 	active_nodes = [ [ 0 for row in range(0, len(Y)+1) ] for col in range(0, len(X)+1) ]
 
 	def print_lcs_recursive(c, i, j, lst):
-		active_nodes[i][j]=True
+		active_nodes[i][j]=1
 		if i==0 or j==0:
 			return
 		if X[i-1] == Y[j-1]:
+			active_nodes[i][j] += 1
 			print_lcs_recursive(c, i-1, j-1, lst)
 			lst.append('{}'.format(X[i-1]))
 		elif c.get(i-1,j) > c.get(i,j-1):
@@ -207,9 +208,6 @@ def lcs_to_tikz(x, y):
 
 	s,active_nodes = print_lcs_alt(c, x, y)
 
-	#for i in active_nodes:
-	#	print(i)
-
 	active_edges=[]
 	output = []
 
@@ -217,61 +215,69 @@ def lcs_to_tikz(x, y):
 	output.append( '\\tikzset{')
 	output.append( 'optimal/.style = {preaction={draw,red,-,double=red,double distance=3\pgflinewidth}, draw=black},')
 	output.append( 'letter/.style= {font=\ttfamily\normalsize},')
-	output.append( 'highlight/.style = {fill=blue!20,draw}')
+	output.append( 'highlight/.style = {fill=blue!20,draw},')
+	output.append( 'select/.style = {fill=red!30,draw}')
 	output.append('}')
 
 	top_row = len(x)+2
 	last_col = len(y)+2
 
-	output.append('\\node\t(0-{}) at (0,{})\t{{$T$}};'.format(top_row, top_row))
-	output.append('\\node\t(1-{}) at (1,{})\t{{$j$}};'.format(top_row, top_row))
+	output.append('\\node\t(0-{}) at (0,{}*.75)\t{{$T$}};'.format(top_row, top_row))
+	output.append('\\node\t(1-{}) at (1,{}*.75)\t{{$j$}};'.format(top_row, top_row))
 	for col in range(2,last_col+1):
-		output.append( '\\node\t({}-{}) at ({},{})\t{{${}$}};'.format(col, top_row, col, top_row, col-3))
+		output.append( '\\node\t({}-{}) at ({},{}*.75)\t{{${}$}};'.format(col, top_row, col, top_row, col-3))
 
-	output.append('\\node\t(0-{}) at (0,{})\t{{$i$}};'.format(top_row-1, top_row-1))
-	output.append('\\node\t(2-{}) at (2,{})\t{{$y[j]$}};'.format(top_row-1, top_row-1))
+	output.append('\\node\t(0-{}) at (0,{}*.75)\t{{$i$}};'.format(top_row-1, top_row-1))
+	output.append('\\node\t(2-{}) at (2,{}*.75)\t{{$y[j]$}};'.format(top_row-1, top_row-1))
 
 	for col in range(3,last_col+1):
-		output.append( '\\node\t({}-{}) at ({},{})\t{{\\tt {}}};'.format(col, top_row-1, col, top_row-1, y[col-3]))
+		output.append( '\\node\t({}-{}) at ({},{}*.75)\t{{\\tt {}}};'.format(col, top_row-1, col, top_row-1, y[col-3]))
 
-	output.append('\\node\t(0-{}) at (0,{})\t{{$-1$}};'.format(top_row-2, top_row-2))
-	output.append('\\node\t(1-{}) at (1,{})\t{{$x[i]$}};'.format(top_row-2, top_row-2))
-	output.append('\\node\t(2-{}) at (2,{})\t{{$0$}};'.format(top_row-2, top_row-2))
+	output.append('\\node\t(0-{}) at (0,{}*.75)\t{{$-1$}};'.format(top_row-2, top_row-2))
+	output.append('\\node\t(1-{}) at (1,{}*.75)\t{{$x[i]$}};'.format(top_row-2, top_row-2))
+	output.append('\\node\t(2-{}) at (2,{}*.75)\t{{$0$}};'.format(top_row-2, top_row-2))
 	
 	for col in range(2,last_col+1):
 		rw = 0
 		if active_nodes[0][col-2]:
-			output.append( '\\node\t({}-{})[highlight] at ({},{})\t{{${}$}};'.format(col, top_row-2, col, top_row-2, c.get(0,col-2)))
+			output.append( '\\node\t({}-{})[highlight] at ({},{}*.75)\t{{${}$}};'.format(col, top_row-2, col, top_row-2, c.get(0,col-2)))
 		else:
-			output.append( '\\node\t({}-{}) at ({},{})\t{{${}$}};'.format(col, top_row-2, col, top_row-2, c.get(0,col-2)))
+			output.append( '\\node\t({}-{}) at ({},{}*.75)\t{{${}$}};'.format(col, top_row-2, col, top_row-2, c.get(0,col-2)))
 
 	for row in range(top_row-3,-1,-1):
 		rw = top_row-(2+row)
 		output.append('')	
-		output.append('\\node\t(0-{}) at (0,{})\t{{${}$}};'.format(row, row,  rw))
-		output.append('\\node\t(1-{}) at (1,{})\t{{\\tt {}}};'.format(row, row, x[rw-1]))
+		output.append('\\node\t(0-{}) at (0,{}*.75)\t{{${}$}};'.format(row, row,  rw-1))
+		output.append('\\node\t(1-{}) at (1,{}*.75)\t{{\\tt {}}};'.format(row, row, x[rw-1]))
 		for col in range(2,last_col+1):
 			cl = col-2
 			if active_nodes[rw][cl]:
 				#print('tikz (x,y)={},{} --> [{},{}]'.format(row, col, rw,cl))
-				output.append( '\\node[highlight]\t({}-{}) at ({},{})\t{{${}$}};'.format(col, row, col, row, c.get(rw,cl)))
+				if active_nodes[rw][cl]==1:
+					output.append( '\\node[highlight]\t({}-{}) at ({},{}*.75)\t{{${}$}};'.format(col, row, col, row, c.get(rw,cl)))
+				elif active_nodes[rw][cl]==2:
+					output.append( '\\node[select]\t({}-{}) at ({},{}*.75)\t{{${}$}};'.format(col, row, col, row, c.get(rw,cl)))
 				# explore W, NW, and N adjacent nodes: stores active edges
-				if cl>0 and active_nodes[rw][cl-1]:
-					active_edges.append( '({}-{}) edge ({}-{})'.format( col-1, row, col, row ))
-				if x[rw-1]==y[cl-1] and cl>0 and rw>0 and active_nodes[rw-1][cl-1]:
+				if active_nodes[rw][cl]==2 and cl>0 and rw>0 and active_nodes[rw-1][cl-1]:
 					active_edges.append( '({}-{}) edge ({}-{})'.format( col-1, row+1, col, row ))
-				if rw>0 and active_nodes[rw-1][cl]:
-					active_edges.append( '({}-{}) edge ({}-{})'.format( col, row+1, col, row ))
+				else:
+					if cl>0 and active_nodes[rw][cl-1]:
+						active_edges.append( '({}-{}) edge ({}-{})'.format( col-1, row, col, row ))
+					if rw>0 and active_nodes[rw-1][cl]:
+						active_edges.append( '({}-{}) edge ({}-{})'.format( col, row+1, col, row ))
 			else:
-				output.append('\\node\t({}-{}) at ({},{})\t{{\\tt {}}};'.format(col, row, col, row, c.get(rw, cl)))	
+				output.append('\\node\t({}-{}) at ({},{}*.75)\t{{\\tt {}}};'.format(col, row, col, row, c.get(rw, cl)))	
 	
 	output.append('\\path')
 	output.append( '\n'.join(active_edges))
 	output.append(';')
 
+	# vertical
+	output.append('\\draw[-,thin] (1.5,{}*.77)--(1.5,-.2);'.format(top_row))
+	# horizontal
+	output.append('\\draw[-,thin] (-.2,{}*.75)--({},{}*.75);'.format(top_row-1.5, last_col+.2, top_row-1.5))
+
 	output.append('\\end{tikzpicture}')
-
-
 
 	return '\n'.join(output)
 
