@@ -84,33 +84,6 @@ def next_best(players, i, free, indent):
 	return max_vorp, free
 			
 
-class BitSet:
-	def __init__(self, size, value=0):
-		self.bits = value
-		self.size = size
-	
-	def set_bit(self, i):
-		#print("Setting bit {} in {:b}".format(i, self.bits))
-		self.bits |= (1<<i)
-		return self.bits
-	def unset_bit(self, i):
-		self.bits ^= (1<<i)
-		return self.bits
-	def complement(self):
-		comp = ~self.bits & ((1<<(self.size))-1)
-		return BitSet( self.size, comp)
-	def is_set(self, i):
-		return bool(self.bits & (1<<i))
-	def copy(self):
-		return BitSet(self.size, self.bits)
-
-	def free_positions(self):
-		free = []
-		for i in range(self.size):
-			if not self.is_set(i):
-				free.append(i)
-		return free
-
 def max_vorp_naive( players, total_budget ):
 
 	count = Counter()
@@ -176,6 +149,7 @@ def max_vorp_memoized( players, total_budget ):
 
 	max_vorp = max_vorp_rec(total_budget, BitSet(4), '')
 	print('MEMOIZED - Budget: {} Calls: {}'.format(total_budget, counter.read()))
+	print(memo)
 	return max_vorp
 			
 		
