@@ -52,14 +52,14 @@ def next_best(players, i, free, indent):
 
 	#print("{}Scanning for next best player at {}K".format(indent, i))
 	max_vorp = -1 
-	max_pos = 0
+	max_pos = -1
 	for p in players:
 		if not free.is_set(p[2]) and p[0]==i:
 			#print("{}Found player {}".format(indent, p))
 			if p[1]> max_vorp:
 				max_pos = p[2]
 				max_vorp = p[1] 
-	if max_pos > 0: free.set_bit( max_pos )
+	if max_pos >= 0: free.set_bit( max_pos )
 	return max_vorp, free
 			
 
@@ -70,16 +70,16 @@ class BitSet:
 	
 	def set_bit(self, i):
 		#print("Setting bit {} in {:b}".format(i, self.bits))
-		self.bits |= (1<<(i-1))
+		self.bits |= (1<<i)
 		return self.bits
 	def unset_bit(self, i):
-		self.bits ^= (1<<(i-1))
+		self.bits ^= (1<<i)
 		return self.bits
 	def complement(self):
 		comp = ~self.bits & ((1<<(self.size))-1)
 		return BitSet( self.size, comp)
 	def is_set(self, i):
-		return bool(self.bits & (1<<(i-1)))
+		return bool(self.bits & (1<<i))
 	def copy(self):
 		return BitSet(self.size, self.bits)
 
@@ -166,53 +166,53 @@ class PlayersUnitTest(unittest.TestCase):
 	players = (
 
 		# (salary, VORP, position)
+		(0,0,0),
+		(1,4,0),
+		(1,2,0),
+		(2,9,0),
+		(3,7,0),
+		(5,8,0),
+		(6,16,0),
+		(6,13,0),
+		(7,13,0),
+		(8,10,0),
+		(9,14,0),
+
 		(0,0,1),
-		(1,4,1),
-		(1,2,1),
-		(2,9,1),
-		(3,7,1),
-		(5,8,1),
-		(6,16,1),
-		(6,13,1),
-		(7,13,1),
-		(8,10,1),
+		(1,6,1),
+		(2,3,1),
+		(3,5,1),
+		(4,2,1),
+		(6,10,1),
+		(7,9,1),
+		(7,8,1),
+		(8,11,1),
+		(9,9,1),
 		(9,14,1),
 
 		(0,0,2),
-		(1,6,2),
-		(2,3,2),
-		(3,5,2),
-		(4,2,2),
-		(6,10,2),
-		(7,9,2),
-		(7,8,2),
-		(8,11,2),
-		(9,9,2),
-		(9,14,2),
-
-		(0,0,3),
-		(1,5,3),
-		(2,5,3),
-		(2,8,3),
-		(4,10,3),
-		(4,9,3),
-		(5,9,3),
-		(7,11,3),
-		(8,14,3),
-		(9,13,3),
-		(10,15,3),
+		(1,5,2),
+		(2,5,2),
+		(2,8,2),
+		(4,10,2),
+		(4,9,2),
+		(5,9,2),
+		(7,11,2),
+		(8,14,2),
+		(9,13,2),
+		(10,15,2),
 		
-		(0,0,4),
-		(2,3,4),
-		(2,2,4),
-		(3,6,4),
-		(3,4,4),
-		(4,7,4),
-		(4,5,4),
-		(6,10,4),
-		(6,6,4),
-		(8,11,4),
-		(8,9,4))
+		(0,0,3),
+		(2,3,3),
+		(2,2,3),
+		(3,6,3),
+		(3,4,3),
+		(4,7,3),
+		(4,5,3),
+		(6,10,3),
+		(6,6,3),
+		(8,11,3),
+		(8,9,3))
 
 	
 	# 0-BF: 10: (actual, expected)  20: (actual, expected) 32: (actual, expected)
@@ -223,21 +223,26 @@ class PlayersUnitTest(unittest.TestCase):
 
 
 	def test_bit_set_1(self):
-		bs = BitSet(4)
+		bs = BitSet(3)
+		bs.set_bit(1)
 		bs.set_bit(2)
 		bs.set_bit(3)
-		bs.set_bit(4)
-		bs.unset_bit(3)
+		bs.unset_bit(2)
 		self.assertEqual( bs.bits, 10)
 		self.assertEqual( bs.complement().bits, 5)
 
 	def test_bit_set_2(self):
 		bs = BitSet(4,5)
-		self.assertTrue( bs.is_set(1))
-		self.assertTrue( bs.is_set(3))
-		self.assertFalse( bs.is_set(2))
-		self.assertFalse( bs.is_set(4))
+		self.assertTrue( bs.is_set(0))
+		self.assertTrue( bs.is_set(2))
+		self.assertFalse( bs.is_set(1))
+		self.assertFalse( bs.is_set(3))
 
+	def test_bit_set_3(self):
+		bs = BitSet(4,5)
+		self.assertTrue( bs.is_set(0))
+		self.assertTrue( bs.is_set(2))
+		self.assertEqual( bs.free_positions(), [1,3] )
 
 	def test_brute_force(self):
 		self.assertEqual( max_vorp_brute_force( self.players, 3), 15)
