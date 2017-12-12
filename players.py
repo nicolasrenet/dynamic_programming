@@ -11,12 +11,34 @@ class Counter:
 	def read(self):
 		return self.count
 
-def max_vorp_brute_force( players, budget ):
+class BitSet:
+	def __init__(self, size, value=0):
+		self.bits = value
+		self.size = size
+	
+	def set_bit(self, i):
+		#print("Setting bit {} in {:b}".format(i, self.bits))
+		self.bits |= (1<<i)
+		return self.bits
+	def unset_bit(self, i):
+		self.bits ^= (1<<i)
+		return self.bits
+	def complement(self):
+		comp = ~self.bits & ((1<<(self.size))-1)
+		return BitSet( self.size, comp)
+	def is_set(self, i):
+		return bool(self.bits & (1<<i))
+	def copy(self):
+		return BitSet(self.size, self.bits)
 
-	pools = ( 	players[0:11],
-		 	players[11:22],
-		 	players[22:33],
-			players[33:44])
+	def free_positions(self):
+		free = []
+		for i in range(self.size):
+			if not self.is_set(i):
+				free.append(i)
+		return free
+
+def max_vorp_brute_force( players, budget ):
 
 	max_vorp=0
 		
@@ -32,14 +54,14 @@ def max_vorp_brute_force( players, budget ):
 				#print("Signed: {} VORP={}".format(signed, cumulated_vorp))
 			return
 		for player in range(0,11):
-			sal = salaries + pools[ position ][player][0]
+			sal = salaries + players[ position ][player][0]
 			if sal > budget:
 				if cumulated_vorp> max_vorp:
 					max_vorp = cumulated_vorp
 				#print("Signed: {} VORP={}".format(signed, cumulated_vorp))
 				return
 			else:
-				max_vorp_rec( position+1, cumulated_vorp + pools[ position ][player][1], sal, signed+[player])			
+				max_vorp_rec( position+1, cumulated_vorp + players[ position ][player][1], sal, signed+[player])			
 
 
 	max_vorp_rec(0, 0, 0, [])
@@ -53,12 +75,11 @@ def next_best(players, i, free, indent):
 	#print("{}Scanning for next best player at {}K".format(indent, i))
 	max_vorp = -1 
 	max_pos = -1
-	for p in players:
-		if not free.is_set(p[2]) and p[0]==i:
-			#print("{}Found player {}".format(indent, p))
-			if p[1]> max_vorp:
-				max_pos = p[2]
-				max_vorp = p[1] 
+	for pos in free.free_positions():
+		for pl in players[pos]:
+			if pl[0]==i and pl[1]> max_vorp:
+				max_pos = pl[2]
+				max_vorp = pl[1] 
 	if max_pos >= 0: free.set_bit( max_pos )
 	return max_vorp, free
 			
@@ -166,7 +187,7 @@ class PlayersUnitTest(unittest.TestCase):
 	players = (
 
 		# (salary, VORP, position)
-		(0,0,0),
+		((0,0,0),
 		(1,4,0),
 		(1,2,0),
 		(2,9,0),
@@ -176,9 +197,9 @@ class PlayersUnitTest(unittest.TestCase):
 		(6,13,0),
 		(7,13,0),
 		(8,10,0),
-		(9,14,0),
+		(9,14,0)),
 
-		(0,0,1),
+		((0,0,1),
 		(1,6,1),
 		(2,3,1),
 		(3,5,1),
@@ -188,9 +209,9 @@ class PlayersUnitTest(unittest.TestCase):
 		(7,8,1),
 		(8,11,1),
 		(9,9,1),
-		(9,14,1),
+		(9,14,1)),
 
-		(0,0,2),
+		((0,0,2),
 		(1,5,2),
 		(2,5,2),
 		(2,8,2),
@@ -200,9 +221,9 @@ class PlayersUnitTest(unittest.TestCase):
 		(7,11,2),
 		(8,14,2),
 		(9,13,2),
-		(10,15,2),
+		(10,15,2)),
 		
-		(0,0,3),
+		((0,0,3),
 		(2,3,3),
 		(2,2,3),
 		(3,6,3),
@@ -212,7 +233,7 @@ class PlayersUnitTest(unittest.TestCase):
 		(6,10,3),
 		(6,6,3),
 		(8,11,3),
-		(8,9,3))
+		(8,9,3)))
 
 	
 	# 0-BF: 10: (actual, expected)  20: (actual, expected) 32: (actual, expected)
