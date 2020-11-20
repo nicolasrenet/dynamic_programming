@@ -159,11 +159,9 @@ def get_active_nodes(c, X, Y):
 
     def lcs_recursive(i, j):
         active_nodes[i][j]=1
-        print('lcs_recursive({},{})'.format(i,j))
         if i==0 or j==0:
             return
         if X[i-1] == Y[j-1]:
-            print("Matching character")
             active_nodes[i][j] += 1
             lcs_recursive(i-1, j-1)
         elif c[i-1][j] > c[i][j-1]:
